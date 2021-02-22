@@ -1750,13 +1750,13 @@ End Function
 ''' Wraps String with Left and/or Right Strings
 '''  Params:
 '''   Val As String, LeftStr As String, Optional Right Str As Variant:
-Public Function StrWrap(val As String, LeftStr As String, Optional RightStr) As String
+Public Function StrWrap(Val As String, LeftStr As String, Optional RightStr) As String
     fx_Push "StrWrap"
     Dim RightVal As String
 
     On Error GoTo Failed
     RightVal = IIf(IsMissing(RightStr), LeftStr, RightStr)
-    StrWrap = LeftStr & val & RightStr
+    StrWrap = LeftStr & Val & RightStr
     fx_Pop
 Exit Function
 Failed:
@@ -2012,6 +2012,24 @@ Public Function SheetAddress(Rng As Range, Optional AbsRow = True, Optional AbsC
 Exit Function
 Failed:
     fx_SetErr fxErr_System, Err.Description
+End Function
+
+''' Casts Value to Array
+'''  Params:
+'''   Val As Variant:
+Public Function CArr(Val As Variant) As Variant
+Attribute CArr.VB_Description = "Casts Value to Array  \nParams:\n Val As Variant"
+    fx_Push "CArr"
+    On Error GoTo Failed
+    If IsArray(Val) Then
+        CArr = Val
+    Else
+        CArr = Array(Val)
+    End If
+    fx_Pop
+Exit Function
+Failed:
+    fx_SetErr Err.Number, Err.Description
 End Function
 
 ''' Returns lenght of Array-like object, Range or a Collection
@@ -2346,7 +2364,7 @@ End Function
 ''' Retrurns array with unique set of elements in 'first' that are not in 'second'
 Public Function Arr_SetDiff(LeftArr As Variant, RightArr As Variant) As Variant
     fx_Push "Arr_SetDiff"
-    Dim ResultArr   As New Scripting.Dictionary
+    Dim ResultArr   As Object: CreateObject ("Scripting.Dictionary")
     Dim i           As Long
     
     If Not IsArray(LeftArr) Then fx.Raise_InvalidArgumentError "LeftArr is not an Array"
@@ -2398,6 +2416,44 @@ Public Function Range_ToArray2D(Rng As Range) As Variant
     End If
 
     Range_ToArray2D = Arr
+    fx_Pop
+Exit Function
+Failed:
+    fx_SetErr Err.Number, Err.Description
+End Function
+
+Public Function Range_ToArr1D(Rng As Range, Optional StartIndex As Long = 0) As Variant
+    fx_Push "Range_ToArr1D"
+    Dim Arr      As Variant
+    Dim Cell     As Range
+    Dim i        As Long
+    
+    ReDim Arr(StartIndex To StartIndex + Rng.Cells.Count - 1)
+    i = StartIndex
+    For Each Cell In Rng.Cells
+        Arr(i) = Cell.Value
+        i = i + 1
+    Next Cell
+    
+    Range_ToArr1D = Arr
+    fx_Pop
+Exit Function
+Failed:
+    fx_SetErr Err.Number, Err.Description
+End Function
+
+Public Function Range_ToArr2D(Rng As Range) As Variant
+    fx_Push "Range_ToArr2D"
+    Dim Arr      As Variant
+
+    If Rng.Cells.Count = 1 Then
+        ReDim Arr(1 To 1, 1 To 1)
+        Arr(1, 1) = Rng.Value
+    Else
+        Arr = Rng
+    End If
+    
+    Range_ToArr2D = Arr
     fx_Pop
 Exit Function
 Failed:
@@ -2695,17 +2751,17 @@ End Sub
 ''' (Private) Helper to convert fxRefTyp to String
 '''  Params:
 '''   Ref As fxRefTyp, Val As Variant:
-Private Function fx_RefToStr(Ref As fxRefTyp, val As Variant) As String
+Private Function fx_RefToStr(Ref As fxRefTyp, Val As Variant) As String
     Dim Result As String
     Select Case Ref
         Case fxAt
-            Result = StrWrap(Replace(CStr(val), "'", "''"), "[@[", "]]")
+            Result = StrWrap(Replace(CStr(Val), "'", "''"), "[@[", "]]")
         Case FxRng
-            Result = val.Address(False, True, , True)
+            Result = Val.Address(False, True, , True)
         Case fxNum, fxRef
-            Result = CStr(val)
+            Result = CStr(Val)
         Case fxStr
-            Result = StrWrap(CStr(val), Chr(34))
+            Result = StrWrap(CStr(Val), Chr(34))
     End Select
     fx_RefToStr = Result ' returns
 End Function
