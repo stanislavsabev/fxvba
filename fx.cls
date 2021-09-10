@@ -11,7 +11,7 @@ Attribute VB_Description = "Class description here"
 ''' Description:
 ''' Public class to utilize common functions
 '''
-''' VERSION 4.2.0 Feb 2021
+''' VERSION 4.3.0 Sep 2021
 
 
 Option Explicit
@@ -479,8 +479,8 @@ End Function
 
 Private Sub Class_Initialize()
     ' Use it to raise errors when developing / testing
-    this.Version = "4.2.0" ' June 2020
-    this.VersionDate = #2/22/2021#
+    this.Version = "4.3.0" ' Sep 2021
+    this.VersionDate = #09/10/2021#
     this.DEBUG_MODE = True
     this.Name = "fx"
     this.FRNG = "[_fxFRNG]"
