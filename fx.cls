@@ -1496,6 +1496,11 @@ Public Function GetWorkbook(ByVal WbkName As String, Optional ByVal WbkPath, Opt
     Dim bAlerts     As Boolean
     Dim sMsg        As String
 
+    With Application
+        bAlerts = .DisplayAlerts
+        bEvents = .EnableEvents
+    End With
+
     ' If path is missing, then we assume, full filename is provided in WbkName
     If IsMissing(WbkPath) Then
         WbkPath = GetFilePath(WbkName)
@@ -1522,17 +1527,20 @@ Public Function GetWorkbook(ByVal WbkName As String, Optional ByVal WbkPath, Opt
     End If
 
     With Application
-        bAlerts = .DisplayAlerts
-        bEvents = .EnableEvents
         .DisplayAlerts = False
         .EnableEvents = False
     End With
 
     ' attempting to open
+    On Error GoTo Failed
     If Not IsMissing(PassWrd) Then
         Set Wbk = Workbooks.Open(FileName:=WbkPath & WbkName, UpdateLinks:=False, ReadOnly:=ReadOnly, Password:=PassWrd)
     Else
         Set Wbk = Workbooks.Open(FileName:=WbkPath & WbkName, UpdateLinks:=False, ReadOnly:=ReadOnly)
+    End If
+
+    If Wbk Is Nothing Then
+        Err.Raise fxErr_Unknown, , "Failed to open " & WbkName
     End If
 
     With Application
@@ -1540,14 +1548,14 @@ Public Function GetWorkbook(ByVal WbkName As String, Optional ByVal WbkPath, Opt
         .EnableEvents = bEvents
     End With
 
-    If Wbk Is Nothing Then
-        Err.Raise fxErr_Unknown, , "Failed to open " & WbkName
-    End If
-
     Set GetWorkbook = Wbk
     fx_Pop
 Exit Function
 Failed:
+    With Application
+        .DisplayAlerts = bAlerts
+        .EnableEvents = bEvents
+    End With
     fx_SetErr Err.Number, Err.Description
     If EndOnError Then FatalError
 End Function
