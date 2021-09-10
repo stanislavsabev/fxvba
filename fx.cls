@@ -113,8 +113,7 @@ Private Type TThis
     Fso             As Object
     xlCalcState     As XlCalculation    ' hold Excel's current calculations state
     DEBUG_MODE      As Boolean
-' For Range_ToTable function. Make sure these constants are unique so they don't duplicate
-' existing column headers and raise errors when using the function
+' Helper constants to use as keys for the special ranges in a Table
     FRNG            As String
     DRNG            As String
     HRNG            As String
@@ -152,7 +151,7 @@ Public Function Arr_ContainsStr(ByRef Arr As Variant, ByVal SearchStr As String)
     fx_Pop
 End Function
 
-''' Returns the number of dimentions for given Array
+''' Returns the number of dimensions for given Array
 Public Function Arr_DimsCount(Arr As Variant) As Long
     fx_Push "Arr_DimsCount"
     Dim Ndx     As Long
@@ -193,8 +192,8 @@ Public Function Arr_IsEmpty(Arr As Variant) As Boolean
     If (Err.Number <> 0) Then
         Result = True
     Else
-        ' On rare occassions, Err.Number will be 0 for an unallocated, empty array.
-        ' On these occassions, LBound is 0 and UBoung is -1.
+        ' On rare occasions, Err.Number will be 0 for an unallocated, empty array.
+        ' On these occasions, LBound is 0 and UBound is -1.
         LB = LBound(Arr)
         Result = (LB > UB)
     End If
@@ -350,7 +349,7 @@ Failed:
 End Sub
 
 ''' Set difference of two arrays
-''' Retrurns array with unique set of elements in 'first' that are not in 'second'
+''' Returns array with unique set of elements in 'first' that are not in 'second'
 Public Function Arr_SetDifference(LeftArr As Variant, RightArr As Variant) As Variant
     fx_Push "Arr_SetDifference"
     Dim ResultArr   As Object: CreateObject ("Scripting.Dictionary")
@@ -411,23 +410,20 @@ Failed:
     fx_SetErr Err.Number, Err.Description
 End Function
 
-''' Prints array to string
-Public Function Arr_ToString(Arr As Variant, Optional Delim = ", ")
-    Dim vShape As Variant
-    Dim i As Long
-    Dim vDims As Variant
+''' 1D Array to delimited string
+Public Function Arr_ToString1D(Arr As Variant, Optional Delim = ", ") As String
     Dim Result As String
-    fx_Push "Arr_ToString"
+    fx_Push "Arr_ToString1D"
 
     On Error GoTo Failed
-    Arr_ToString = Join(Arr, Delim)
+    Arr_ToString1D = Join(Arr, Delim)
     fx_Pop
 Exit Function
 Failed:
     fx_SetErr Err.Number, Err.Description
 End Function
 
-''' Displays Explorer window and Returns Stirng with selected file / folder
+''' Displays Explorer window and Returns String with selected file / folder
 ''' NOTE: No support for multi-select
 '''  Params:
 '''   Optional ByVal StartPath As String,
@@ -462,7 +458,6 @@ NextCode:
     Set Dialog = Nothing
     fx_Pop
 End Function
-
 
 ''' Casts Value to Array
 '''  Params:
@@ -520,8 +515,8 @@ Public Sub ClearLastError()
     End With
 End Sub
 
-Public Sub Collection_SortInplace(Coll As Collection)
-    fx_Push "Collection_SortInplace"
+Public Sub Collection_SortInPlace(Coll As Collection)
+    fx_Push "Collection_SortInPlace"
     Dim Tmp     As Variant
     Dim i       As Long
     Dim j       As Long
@@ -572,7 +567,7 @@ Failed:
     fx_SetErr Err.Number, Err.Description
 End Function
 
-''' Similar to CoolectionToArray.
+''' Similar to CollectionToArray.
 ''' Creates array with collection's elements by calling Object member function/property
 ''' on each element in the collection
 Public Function Collection_ToObjMemberArray(CollLike As Object, ByVal MemberName As String, Optional ByVal MemberType As VbCallType = VbGet, Optional Limit As Variant) As Variant
@@ -606,7 +601,7 @@ Failed:
     fx_SetErr fxErr_System, Err.Description
 End Function
 
-''' Creates dlimited string with values in a collection
+''' Creates delimited string with values in a collection
 Public Function Collection_ToString(CollLike As Object, Optional ByVal Delim = ", ", Optional Limit As Variant) As String
     fx_Push "Collection_ToString"
     Dim Tmp As Variant
@@ -638,7 +633,7 @@ Public Function Collection_ToString(CollLike As Object, Optional ByVal Delim = "
     fx_Pop
 End Function
 
-''' Similar to CoolectionToString.
+''' Similar to CollectionsToString.
 ''' Creates a delimited string with values by calling Object member function/property
 ''' on each element in the collection
 Public Function Collection_ToObjMemberString(CollLike As Object, ByVal MemberName As String, Optional ByVal MemberType As VbCallType = VbGet, Optional ByVal Delim = ", ", Optional Limit As Variant) As String
@@ -666,8 +661,8 @@ Failed:
     fx_SetErr fxErr_System, Err.Description
 End Function
 
-''' Similar to CoolectionToString.
-''' Creates dlimited string with keys/values in a Scripting.Dictionary
+''' Similar to CollectionToString.
+''' Creates delimited string with keys/values in a Scripting.Dictionary
 Public Function Dict_ToString(DictLike As Object, Optional Format = "keys_and_values", Optional ByVal Delim = ", ", Optional Limit As Variant) As String
     fx_Push "Dict_ToString"
     Dim Tmp As Variant
@@ -745,14 +740,14 @@ drawBorder:
         Case fxLeftBorders: BIdx = xlEdgeLeft
         Case fxRightBorders: BIdx = xlEdgeRight
         Case Else
-            Err.Raise fxErr_Value, , "Unknown Border Laout"
+            Err.Raise fxErr_Value, , "Unknown Border Layout"
     End Select
 
     With Rng.Borders(BIdx)
         .LineStyle = LineStyle
         If LineStyle = xlContinuous Then
             .Color = ColorRGB
-            .Weigth = LineWeight
+            .Weight = LineWeight
         End If
     End With
     Return
@@ -794,7 +789,7 @@ Failed:
     fx_SetErr Err.Number, Err.Description
 End Function
 
-''' Terminates program execution / calls Err.Raisein DEBUG_MODE
+''' Terminates program execution / calls Err.Raise in DEBUG_MODE
 Public Sub FatalError(Optional ByVal ErrMsg = "", Optional ByVal Source = "")
     Static Thrown   As Boolean
     Dim EndMsg      As String
@@ -1319,7 +1314,7 @@ Failed:
     End If
 End Sub
 
-''' Wrapps Formula test in IFERROR formula
+''' Wraps Formula test in IFERROR formula
 ''' NOTE: final String does not have '=" sign
 '''  Params:
 '''   FormulaTxt As String, Optional ByVal ValueIfErr As String = """""":
@@ -1427,7 +1422,7 @@ Failed:
     GetLastRowInColumn = -1
 End Function
 
-''' Returns file extention from file name
+''' Returns file extension from file name
 '''  Params:
 '''   FName As String:
 Public Function GetFileExt(FName As String) As String
@@ -1457,7 +1452,7 @@ Public Function GetFilePath(FullFileName As String) As String
     fx_Pop
 End Function
 
-''' Returns Stringwithuser's ShortDate Format
+''' Returns String with user's ShortDate Format
 '''  Params:
 '''   :
 Public Function GetShortDateFormat() As String
@@ -1518,7 +1513,7 @@ Public Function GetWorkbook(ByVal WbkName As String, Optional ByVal WbkPath, Opt
         Err.Raise fxErr_InvalidArgument, , "WbkName: Workbook not found"
     End If
 
-    ' If already opened - returnin reference
+    ' If already opened - returning reference
     GetIsOpen = Workbook_IsOpen(WbkName)
     If GetIsOpen Then
         Set GetWorkbook = Workbooks(WbkName)
@@ -1566,7 +1561,7 @@ End Function
 '''    TargetWbk > The workbook to search in
 '''    EndOnError:=False > if True, ending program execution
 '''    UCaseCompare:=False > UCase before compare
-'''    TrimComparee:=False > Trim before comparee
+'''    TrimCompare:=False > Trim before compare
 '''    PartialMatch:=False > if True, using 'like' statement
 '''                          to look for part of the sheet name
 Public Function GetWorksheet(ByVal SheetName As String, ByRef TargetWbk As Workbook, Optional EndOnError = False, Optional UCaseCompare = False, Optional TrimCompare = False, Optional PartialMatch = False) As Worksheet
@@ -1593,7 +1588,7 @@ Public Function GetWorksheet(ByVal SheetName As String, ByRef TargetWbk As Workb
         If UCaseCompare Then sSearchName = UCase$(sSearchName)
 
         For Each Wks In TargetWbk.Worksheets
-            ' modyfying target name
+            ' modelling target name
             sTargetName = Wks.Name
             If TrimCompare Then sTargetName = WorksheetFunction.Trim(sTargetName)
             If UCaseCompare Then sTargetName = UCase$(sTargetName)
@@ -1661,10 +1656,10 @@ Public Sub GoSilent(Optional ByVal CalcState As XlCalculation = xlCalculationAut
     fx_Pop
 End Sub
 
-''' Returns lenght of Array-like object, Range or a Collection
+''' Returns length of Array-like object, Range or a Collection
 '''  Params:
 '''   Iterable As Variant
-'''   Dimention=1: applicable only for Array and Range.
+'''   Dimension=1: applicable only for Array and Range.
 '''     - for Array: specifies the array's dimension
 '''     - for Range: 0 = Range.Rows.Count, 1 = Range.Columns.Count
 Public Function LenOf(Iterable As Variant, Optional Dimension = 1) As Long
@@ -1693,7 +1688,7 @@ Public Function LenOf(Iterable As Variant, Optional Dimension = 1) As Long
     ElseIf IsArray(Iterable) Then
         Result = UBound(Iterable, Dimension) - LBound(Iterable, Dimension) + 1
     Else
-        Raise_InvalidArgumentError "Unsuported data type for 'Iterable'"
+        Raise_InvalidArgumentError "Unsupported data type for 'Iterable'"
     End If
 Exit_Function:
     LenOf = Result
@@ -1704,7 +1699,7 @@ Failed:
     fx_SetErr fxErr_System, Err.Description
 End Function
 
-''' Converitng ListObject to Range and returning reference to it
+''' Converting ListObject to Range and returning reference to it
 '''  Params:
 '''   ListObj As ListObject,
 '''   Optional ClearFormatting As Boolean = True:
@@ -1737,7 +1732,7 @@ Failed:
     fx_SetErr Err.Number, Err.Description
 End Function
 
-''' Replacing all invalid charactersin a FileName
+''' Replacing all invalid characters in a FileName
 '''  Params:
 '''   ByVal FileName As String,
 '''   Optional ByVal ReplaceWith As String = "_":
@@ -1950,9 +1945,9 @@ Failed:
     If EndOnError Then FatalError
 End Function
 
-''' Searching forlist ofvalues in the first row / column of arange
+''' Searching for list of values in the first row / column of a range
 ''' Returns True if all values are found
-''' Use fx.LastErrText to read comma delimitedstringwith ny issing values
+''' Use fx.LastErrText to read comma delimited string with missing values
 '''  Params:
 '''   Rng As Range,
 '''   List As Variant,
@@ -2119,8 +2114,8 @@ Failed:
     If EndOnError Then FatalError
 End Function
 
-Sub Range_TrimInplace(Rng As Range)
-    fx_Push "Range_TrimInplace"
+Sub Range_TrimInPlace(Rng As Range)
+    fx_Push "Range_TrimInPlace"
     On Error GoTo Failed
     Dim i       As Long
     Dim Arr     As Variant
@@ -2493,8 +2488,8 @@ Public Property Get LastErrNumber() As Long
     LastErrNumber = CLng(this.LastErr.Num)
 End Property
 
-''' Returns String with the Error Message reaised by the last fx function call
-''' Returns Empty if no errorr was raised
+''' Returns String with the Error Message raised by the last fx function call
+''' Returns Empty if no error was raised
 Public Property Get LastErrText() As String
     LastErrText = this.LastErr.Text
 End Property
