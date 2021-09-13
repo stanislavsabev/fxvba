@@ -1,2 +1,2 @@
 # fxvba
-VBA class to utilize common functions
+Static VBA class to utilize common functions
